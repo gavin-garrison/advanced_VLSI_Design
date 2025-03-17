@@ -16,7 +16,7 @@ module FIR_TwoParallel_tb;
     int idx = 0;
 
     // Instantiate Unit Under Test (UUT)
-    FIR_TwoParallel_Custom dut (
+    FIR_TwoParallel dut (
         .clk(clk),
         .rst(~rst_n),
         .in_even(input_a),
