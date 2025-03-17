@@ -17,7 +17,7 @@ module TripleParallelFIR_tb;
     int index;
 
     // Instantiate Unit Under Test
-     dut (
+     FIR_Three_Parallel dut (
         .clk(clk_sig),
         .rst(rst_sig),
         .d_phase0(data_in_a),
