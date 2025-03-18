@@ -1,0 +1,5 @@
+create_clock -period 21276.000 -name clk -add [get_ports clk]
+set_input_delay -clock clk 100.000 [get_ports in_even]
+set_input_delay -clock clk 100.000 [get_ports in_odd]
+set_output_delay -clock clk 100.000 [get_ports out_even]
+set_output_delay -clock clk 100.000 [get_ports out_odd]
