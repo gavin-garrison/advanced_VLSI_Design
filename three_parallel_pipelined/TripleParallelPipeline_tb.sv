@@ -19,33 +19,40 @@ module TripleParallelPipeline_tb;
     three_parallel_pipeline dut (
         .clk(clk_sig),
         .rst(rst_sig),
-        .din(stream_a),      // single input in the original
-        .dout(out_a)         // single output in the original
+        .din0(stream_a),
+        .din1(stream_b),
+        .din2(stream_c),
+        .dout0(out_a),
+        .dout1(out_b),
+        .dout2(out_c)
     );
 
     // Initial setup
     initial begin
-        $readmemb("input.data", sample_array); // read from local file
+        $readmemb("input.data", sample_array); // Load input samples
 
         // Start with reset asserted
         clk_sig = 0;
         rst_sig = 1;
+        idx = 0;
 
-        // Deassert after half cycle
-        #10638 rst_sig = 0;
+        // Deassert reset after one full clock cycle
+        #21276 rst_sig = 0;
     end
 
-    // Provide inputs
+    // Provide inputs: 3 samples per cycle
     always_ff @(posedge clk_sig) begin
         if (!rst_sig && (idx < MEM_CAPACITY - 3)) begin
             idx <= idx + 3;
         end
     end
 
-    // just feed one stream
+    // Assign current input samples
     assign stream_a = sample_array[idx];
+    assign stream_b = sample_array[idx + 1];
+    assign stream_c = sample_array[idx + 2];
 
-    // Clock generation: ~47 kHz
+    // Clock generation: 47 kHz → 21276 ns period
     always #10638 clk_sig = ~clk_sig;
 
 endmodule
