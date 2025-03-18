@@ -1,0 +1,35 @@
+module cdr_tb;
+  reg clk;
+  reg reset;
+  reg data_in;
+  wire recovered_clk;
+  
+  cdr_top uut (
+    .clk(clk),
+    .reset(reset),
+    .data_in(data_in),
+    .recovered_clk(recovered_clk)
+  );
+  
+  // Generate a system clock (100 MHz)
+  initial begin
+    clk = 0;
+    forever #5 clk = ~clk;
+  end
+  
+  // Stimulus generation for data_in with simple transitions
+  initial begin
+    reset = 1;
+    data_in = 0;
+    #20;
+    reset = 0;
+    
+    // Simulated data transitions (modify to model jitter or other patterns)
+    repeat (1000) begin
+      #20 data_in = 1; 
+      #10 data_in = 0;
+      #30;
+    end
+    $stop;
+  end
+endmodule
