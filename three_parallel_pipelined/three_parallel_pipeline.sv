@@ -11,7 +11,7 @@ module three_parallel_pipeline (
     parameter int NUM_TAPS = 102;
 
     // Stored coefficients (scaled Q1.31 format)
-        localparam logic signed [31:0] coef [TAPS-1:0] = '{
+        localparam logic signed [31:0] coef [NUM_TAPS-1:0] = '{
         32'b11111111111110000101000100011100,
         32'b11111111111000110010100001001110,
         32'b11111111101101000000010001110011,
@@ -115,14 +115,11 @@ module three_parallel_pipeline (
         32'b11111111111000110010100001001110,
         32'b11111111111110000101000100011100
     };
-     // Delay line sized for pipeline logic
-    // (One sample per clock but extended storage for partial accumulation)
+    // Pipeline shift buffer and accumulators
     logic signed [15:0] shift_buffer [2*NUM_TAPS-2:0];
-    
-    // Pipeline for accumulate
     logic signed [63:0] accum_stage [NUM_TAPS-1:0];
 
-    // Shift samples on each rising edge or reset
+    // Shift buffer logic
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < 2*NUM_TAPS-1; i++) begin
@@ -132,21 +129,20 @@ module three_parallel_pipeline (
             for (int i = 2*NUM_TAPS-2; i > 0; i--) begin
                 shift_buffer[i] <= shift_buffer[i - 1];
             end
-            // Insert the latest input sample
             shift_buffer[0] <= d_in;
         end
     end
 
-    // Accumulate partial products in pipeline stages
+    // Pipelined accumulation
     always_ff @(posedge clk) begin
-        accum_stage[0] <= d_in * coeff_mem[0];
+        accum_stage[0] <= d_in * coef[0];
         for (int k = 1; k < NUM_TAPS; k++) begin
-            accum_stage[k] <= accum_stage[k-1] 
-                              + shift_buffer[2*(k-1)+1] * coeff_mem[k];
+            accum_stage[k] <= accum_stage[k-1] +
+                              shift_buffer[2*(k-1)+1] * coef[k];
         end
     end
 
-    // Shift right by 31 bits to align final Q1.31 product
+    // Final output scaled (Q1.31 → integer)
     assign d_out = accum_stage[NUM_TAPS-1] >>> 31;
 
 endmodule
