@@ -1,0 +1,12 @@
+# Clock definition (47 kHz → 21276 ns period)
+create_clock -period 21276.000 -name clk -add [get_ports clk]
+
+# Input delays (estimated arrival time = 100 ns before clk edge)
+set_input_delay -clock clk 100.000 [get_ports din0]
+set_input_delay -clock clk 100.000 [get_ports din1]
+set_input_delay -clock clk 100.000 [get_ports din2]
+
+# Output delays (estimated required time = 100 ns after clk edge)
+set_output_delay -clock clk 100.000 [get_ports dout0]
+set_output_delay -clock clk 100.000 [get_ports dout1]
+set_output_delay -clock clk 100.000 [get_ports dout2]
