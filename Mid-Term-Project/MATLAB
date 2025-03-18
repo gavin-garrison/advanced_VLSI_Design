@@ -1,1 +1,66 @@
+% MATLAB Script: fir_design.m
+clear; clc; close all;
 
+% Specifications
+N = 100;  % Number of taps
+% Normalized frequency bands: 0 to 1 corresponds to 0 to π rad/sample.
+% We define bands as: passband [0, 0.2] and stopband [0.23, 1]
+F = [0, 0.2, 0.23, 1];  
+A = [1, 1, 0, 0];       % Desired amplitudes in each band
+W = [1, 10];           % Weights: (Increasing weight in stopband for better attenuation)
+
+% Design the filter using Parks-McClellan algorithm
+b = firpm(N-1, F, A, W);
+
+% Plot frequency response of the original (unquantized) filter
+figure;
+freqz(b, 1, 1024);
+title('Frequency Response of Unquantized FIR Filter');
+
+% Save coefficients for later use
+save('fir_coefficients.mat', 'b');
+% MATLAB Script: fir_quantize.m
+load('fir_coefficients.mat','b');
+
+% Define a fixed-point data type: signed, 16-bit, 15 fractional bits.
+% (Adjust word and fraction length as needed.)
+wordLength = 16;
+fracLength = 15;
+b_fixed = fi(b, true, wordLength, fracLength);
+
+% Convert back to double for plotting the quantized frequency response
+b_quantized = double(b_fixed);
+
+% Plot frequency response of the quantized filter
+figure;
+freqz(b_quantized, 1, 1024);
+title('Frequency Response of Quantized FIR Filter');
+
+% Check the difference between original and quantized coefficients
+figure;
+stem(b - b_quantized);
+title('Coefficient Quantization Error');
+xlabel('Coefficient Index');
+ylabel('Error');
+
+% Optionally, save the quantized coefficients in a text file for Verilog
+fileID = fopen('fir_coefficients_fixed.txt','w');
+fprintf(fileID, '%d\n', b_fixed.int);  % Save integer representation
+fclose(fileID);
+
+% FIR filter design parameters
+N = 100;  % Number of taps
+fpass = 0.2;       % Passband edge (normalized to π, so 0.2 means 0.2π)
+fstop = 0.23;      % Stopband edge (0.23π)
+fs = 2;            % Sampling frequency (normalized)
+fcuts = [fpass fstop] * (fs/2);  % Convert to Hz (0.2π -> 0.2)
+
+% Design a filter using the Kaiser window method
+dev = [0.01 10^(-80/20)];  % Passband ripple, stopband attenuation (80dB)
+[~,Wn,beta,ftype] = kaiserord(fcuts, [1 0], dev, fs);
+
+h = fir1(N-1, Wn, ftype, kaiser(N, beta));  % Design the filter
+
+% Scale and quantize to 16-bit signed fixed point
+h_fixed = round(h * (2^15 - 1));  % Scale to int16 range
+disp(h_fixed')
