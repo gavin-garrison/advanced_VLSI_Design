@@ -13,7 +13,7 @@ module TripleParallelPipeline_tb;
     // Memory used for feeding input
     parameter int MEM_CAPACITY = 131072;
     logic signed [15:0] sample_array [0:MEM_CAPACITY-1];
-    int idx = 0;
+    logic idx = 0;
 
     // Instantiate DUT
     three_parallel_pipeline dut (
